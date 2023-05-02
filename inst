@@ -1,0 +1,16 @@
+#!/bin/bash
+
+R -e 'install.packages("remotes")'
+Rscript -e 'remotes::install_version("shiny",upgrade="never", version = "1.7.4")'
+Rscript -e 'remotes::install_version("config",upgrade="never", version = "0.3.1")'
+Rscript -e 'remotes::install_version("testthat",upgrade="never", version = "3.1.7")'
+Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.4.0")'
+Rscript -e 'remotes::install_version("DT",upgrade="never", version = "0.27")'
+Rscript -e 'remotes::install_version("data.table",upgrade="never", version = "1.14.8")'
+Rscript -e 'remotes::install_version("sodium",upgrade="never", version = "1.2.1")'
+Rscript -e 'remotes::install_version("polished",upgrade="never", version = "0.8.1")'
+Rscript -e 'remotes::install_github("tychobra/polishedpayments@5e7494755963947c02dbd6450206c3a876870be4")'
+Rscript -e 'remotes::install_version("pool",upgrade="never", version = "1.0.1")'
+Rscript -e 'remotes::install_version("RPostgreSQL",upgrade="never", version = "0.7-5")'
+Rscript -e 'remotes::install_github("haozhu233/kableExtra@292f60715959ea952ff25a8aedfd782793b15f7b")'
+Rscript -e 'remotes::install_github("kent-orr/typeCreate@1d75fca9e8f9423515fa0d03f480d63e2f7df58f")'
