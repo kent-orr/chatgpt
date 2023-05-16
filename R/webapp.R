@@ -17,7 +17,7 @@ prompt_shiny <- function() {
            ) # end top column
     , column(12,
              h3("Output")
-             , tags$div(class="output", uiOutput("output"))
+             , tags$div(id="output")
              , verbatimTextOutput("console")
              ) # end bottom column
   )
@@ -40,19 +40,45 @@ prompt_shiny <- function() {
 
     observeEvent(input$submit, ignoreInit = TRUE, once = FALSE, {
       out(c(out(), paste("You:", input$prompt)))
+
+      # browser()
+
+      # add text you sent
+      insertUI("#output"
+               , ui = tags$div(
+                 class = "user"
+                 , tags$p(input$prompt)
+                 )
+               , immediate = TRUE)
+
+      # add waiting anim
+      insertUI("#output"
+               , ui = tags$div(
+                 class = "response"
+                 , id = "waiting"
+                 , tags$p("...")
+               )
+               , immediate = TRUE)
+
       x = Chat$new(input$prompt)
       chat(x)
       out(c(out(), paste("OpenAI:", x$latest_response)))
-      updateTextAreaInput(session, "prompt", value = "")
-    })
 
-    output$output <- renderUI({
-      tags$pre(
-        tags$code(
-          paste(out(), collapse = "\n")
-        )
-      )
-      })
+      removeUI("#waiting", immediate = TRUE)
+      insertUI("#output"
+               , ui = tags$div(
+                 class = "response"
+                 , tags$p(x$latest_response)
+               )
+               , immediate = TRUE)
+
+
+      updateTextAreaInput(session, "prompt", value = "")
+
+      # add response
+
+      # browser()
+    })
 
   }
 
@@ -60,3 +86,4 @@ prompt_shiny <- function() {
 }
 
 prompt_shiny()
+
