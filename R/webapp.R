@@ -85,5 +85,5 @@ prompt_shiny <- function() {
   shinyApp(ui, server) |> runApp()
 }
 
-prompt_shiny()
+
 

@@ -18,3 +18,11 @@ start_chat = function(prompt) {
       newchat$chat(x)
   }
 }
+
+start_completions = function(prompt) {
+  cat("Type STOP to end session")
+  while (TRUE) {
+    completions_stream(prompt)
+    if (x == "STOP") break
+  }
+}
