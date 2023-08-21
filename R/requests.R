@@ -55,13 +55,18 @@ chats <- function(messages
                   , payload = list(model = "gpt-3.5-turbo")
                   , token = config::get()$openai) {
 
-  payload = c(payload, list(messages = messages))
+  payload[["messages"]] = messages
   x = gpt_request("https://api.openai.com/v1/chat/completions", payload, token)
   x
 }
 
 print.chat.completion <- function(x, ...) {
-  cat(stringr::str_squish(x$choices$message$content))
+  content = if ("funtion_call" %in% x$choices$message)
+    x$choices$message$function_call$arguments
+  else
+    x$choices$message$content
+
+  cat(stringr::str_squish(content))
 }
 
 print.text_completion <- function(x, ...) {

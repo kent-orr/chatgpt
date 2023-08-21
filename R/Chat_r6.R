@@ -8,6 +8,8 @@ Chat <- R6::R6Class("Chat"
     start_time = Sys.time()
     , model = NULL
     , messages = NULL
+    , functions = NULL
+    , function_call = NULL
     , token = NULL
     , usr = "system"
     , latest_response = NULL
@@ -15,12 +17,19 @@ Chat <- R6::R6Class("Chat"
     #' @description reset the chat, this removes all "memory" of the previous conversation.
     , reset = function() {self$messages = NULL; self$usr = "system"}
 
+
+# Initialize --------------------------------------------------------------
+
     #' @description create a new chat session
     #' @param message the message you'd like to send
     #' @param payload additional post body options, usually the model
     #' @param token your openai auth token
-    , initialize = function(message, payload = list(model = "gpt-3.5-turbo"), token = config::get()$openai) {
+    , initialize = function(message
+                            , payload = list(model = "gpt-3.5-turbo")
+                            , token = config::get()$openai) {
       self$model = payload$model
+      self$functions = payload$functions
+      self$function_call = payload$function_call
       self$token = token
       x = chats(list(list(role = "system", content = message)), payload, token = token)
       print(x)
@@ -29,16 +38,68 @@ Chat <- R6::R6Class("Chat"
       self$usr = "user"
       self$tokens = self$tokens + x$usage$total_tokens
     }
+
+
+# Add Function ------------------------------------------------------------
+
+    #' @description add a function to the payload functions
+    #' @param name function name
+    #' @param description what the function does
+    #' @param parameters list of parameters the function returns
+    , add_function = function(name, description = NULL, parameters) {
+      f = list(
+        name = name
+        , description = description
+        , parameters = list(type = "object", properties = parameters)
+      )
+      # browser()
+      if (length(self$functions) == 0)
+        self$functions = list()
+      self$functions = append(self$functions, list(f))
+    }
+
+
+# Chat --------------------------------------------------------------------
+
     #' @description continue the chat conversation
     #' @param message the message you'd like to send
     , chat = function(message) {
+
       msg = c(self$messages, list(list(role = self$usr, content = message)))
-      x = chats(msg, payload = list(model = self$model), token = self$token)
+      payload = list(model = self$model)
+      if (length(self$functions) > 0)
+        payload$functions = self$functions
+      if (length(self$function_call) > 0)
+        payload$function_call = self$function_call
+      # browser()
+      x = chats(msg, payload = payload
+                , token = self$token)
       print(x)
-      self$latest_response = x$choices$message$content
-      self$messages = c(list(list(role = self$usr, content = message)), list(as.list(x$choices$message)))
+      self$latest_response = x$choices$message
+
+      if ("function_call" %in% names(x$choices$message)) {
+        self$messages = c(
+          self$messages,
+          list(list(
+              role = "function"
+              , name = x$choices$message$function_call$name
+              , content = x$choices$message$function_call$arguments))
+          )
+
+      } else {
+        self$messages = c(
+          self$messages
+          , list(list(role = self$usr, content = message))
+                          , list(as.list(x$choices$message)))
+      }
+
+
       self$tokens = self$tokens + x$usage$total_tokens
     }
+
+
+# Usage -------------------------------------------------------------------
+
     #' @description view the current token usage for this chat session
     , usage = function() {
       recent = paste("🧑", self$latest_response$usage$prompt_tokens
