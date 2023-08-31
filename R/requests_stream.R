@@ -1,5 +1,5 @@
 gpt_request_stream <- function(base_url, callback, payload, token = config::get()$openai) {
-
+  # browser()
   payload = jsonlite::toJSON(c(payload, list(stream = TRUE)), auto_unbox = T)
 
   h <- curl::new_handle() |>
@@ -12,31 +12,36 @@ gpt_request_stream <- function(base_url, callback, payload, token = config::get(
   x = curl::curl_fetch_stream(base_url, fun = callback, h)
   if (x$status_code != 200) {warning(x$status_code); return()}
 
-  # class(x) <- c(class(x), x$object)
-  # x
+  class(x) <- c(class(x), x$object)
+  x
+}
+
+callback_ = function(x) {
+  y = rawToChar(x)
+  y2 = stringr::str_split_1(y, "\\n\\n")
+  y2 = y2[y2 != ""]
+  for (i in seq_along(y2)) {
+    y2[i] = gsub("data: ", "", y2[i])
+  }
+
+  y2 = sapply(y2, \(x) {
+    if (x == "[DONE]")
+      return("")
+    else
+      jsonlite::fromJSON(x)$choices$delta$content
+  }) |> paste(collapse = "")
+  cat(y2)
 }
 
 completions_stream <- function(prompt
-                               , callback = function(x) {
-                                 # cat("howdy")
-                                 # browser()
-                                 x = rawToChar(x)
-                                 x = stringr::str_split(x, "\\\n\\n")[[1]]
-                                 x = gsub("data: ", "", x = x)
-                                 x = sapply(x, \(x) if (nchar(x) != 0 & x != "[DONE]") jsonlite::fromJSON(x))
-                                 x = x[!sapply(x, is.null)]
-                                 for (i in x) {
-                                   if (i[["choices"]][["text"]] != "[DONE]") {
-                                     cat(i[["choices"]][["text"]])
-                                     text_results <<- paste0(text_results, i[["choices"]][["text"]])
-                                   }}
-                               }
-                               , payload = list(model = "text-davinci-003")
+                               , callback = callback_
+                               , payload = list(model = "gpt-3.5-turbo")
                                , token = config::get()$openai) {
 
-  payload = c(payload, prompt = prompt)
-  text_results <- ""
-  # browser()
-  x = gpt_request_stream("https://api.openai.com/v1/completions", callback, payload, token)
-  text_results
+  payload = c(payload, messages = list(list(list(role = "system", content = prompt))))
+  x = gpt_request_stream("https://api.openai.com/v1/chat/completions", callback, payload, token)
+  x
 }
+
+# x = completions_stream("write an R function that calculates the standard deviation from the mean for a set of numbers")
+
