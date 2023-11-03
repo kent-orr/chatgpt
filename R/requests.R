@@ -19,10 +19,11 @@ gpt_request <- function(base_url, payload, token = config::get()$openai) {
     curl::handle_setopt(postfields = payload)
 
   x = curl::curl_fetch_memory(base_url, h)
-  if (x$status_code != 200) {warning(x$status_code); return()}
+  if (x$status_code != 200) {warning(jsonlite::prettify(rawToChar(x$content))); return()}
 
   x = x$content |> rawToChar() |> jsonlite::fromJSON()
-  class(x) <- c(class(x), x$object)
+  new_class = if(x$choices$finish_reason == "function_call") "function_call" else x$object
+  class(x) <- c(class(x), new_class)
   x
 }
 
@@ -71,4 +72,11 @@ print.chat.completion <- function(x, ...) {
 
 print.text_completion <- function(x, ...) {
   cat(x$choices$text)
+}
+
+print.function_call <- function(x, ...) {
+  args = x$choices$message$function_call$arguments |> jsonlite::fromJSON()
+  structure(list(args), names = x$choices$message$function_call$name) |>
+    jsonlite::toJSON(auto_unbox = TRUE, pretty = TRUE) |>
+    cat()
 }
