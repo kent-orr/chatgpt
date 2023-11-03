@@ -1,4 +1,4 @@
-#' Createa a running chat dialogue
+#' Create a a running chat dialogue
 #' @description This R6 class stores chat messages to be used in the future  calls, so gpt can retain 'memory' of the conversation. Additionally there are some helpers to display token usage and to reset the chat.
 #' @export
 #' @examples chat = Chat$new('List ingredients in spaghetti')
@@ -72,19 +72,21 @@ Chat <- R6::R6Class("Chat"
     #' @param arguments A list of arguments for the function call (default is an empty list).
     #' @return The updated Chat object, reflecting the latest state after the function call.
     #' @export
-    call_function = function(name, arguments = list()) {
+    call_function = function(name, msg) {
       if (!is.character(name) || nchar(name) == 0) {
         stop("A valid function name must be provided as a non-empty string.", call. = FALSE)
       }
 
+      # browser()
+
       # Construct the function call payload
       self$function_call <- list(name = name)
-      if (length(arguments) > 0) {
-        self$function_call$arguments <- arguments
-      }
+      # if (length(arguments) > 0) {
+      #   self$function_call$arguments <- arguments
+      # }
 
       # Add the function call to the chat payload
-      msg <- list(list(role = "system", function_call = self$function_call))
+      msg <- list(list(role = "user", content = msg))
 
       # Create the payload for the API request
       payload <- list(
@@ -99,6 +101,9 @@ Chat <- R6::R6Class("Chat"
       # Perform the API call
       x <- chats(payload$messages, payload = payload, token = self$token)
       print(x)
+
+      # return functions payload to default for future chats
+      self$function_call <- NULL
 
       # Update the latest response and messages history
       self$latest_response <- x$choices$message$content
