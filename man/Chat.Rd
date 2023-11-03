@@ -15,6 +15,8 @@ chat = Chat$new('List ingredients in spaghetti')
 \itemize{
 \item \href{#method-Chat-reset}{\code{Chat$reset()}}
 \item \href{#method-Chat-new}{\code{Chat$new()}}
+\item \href{#method-Chat-add_function}{\code{Chat$add_function()}}
+\item \href{#method-Chat-call_function}{\code{Chat$call_function()}}
 \item \href{#method-Chat-chat}{\code{Chat$chat()}}
 \item \href{#method-Chat-usage}{\code{Chat$usage()}}
 \item \href{#method-Chat-clone}{\code{Chat$clone()}}
@@ -24,6 +26,7 @@ chat = Chat$new('List ingredients in spaghetti')
 \if{html}{\out{<a id="method-Chat-reset"></a>}}
 \if{latex}{\out{\hypertarget{method-Chat-reset}{}}}
 \subsection{Method \code{reset()}}{
+reset the chat, this removes all "memory" of the previous conversation.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chat$reset()}\if{html}{\out{</div>}}
 }
@@ -55,10 +58,57 @@ create a new chat session
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Chat-add_function"></a>}}
+\if{latex}{\out{\hypertarget{method-Chat-add_function}{}}}
+\subsection{Method \code{add_function()}}{
+add a function to the payload functions
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chat$add_function(name, description = NULL, parameters)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{function name}
+
+\item{\code{description}}{what the function does}
+
+\item{\code{parameters}}{list of parameters the function returns
+call_function method for calling predefined functions
+
+This method sends a request to call a predefined function in the model.
+It constructs a payload that includes the function call and its arguments,
+then sends this as part of the chat messages to the API.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Chat-call_function"></a>}}
+\if{latex}{\out{\hypertarget{method-Chat-call_function}{}}}
+\subsection{Method \code{call_function()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Chat$call_function(name, arguments = list())}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{The name of the function to call.}
+
+\item{\code{arguments}}{A list of arguments for the function call (default is an empty list).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The updated Chat object, reflecting the latest state after the function call.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Chat-chat"></a>}}
 \if{latex}{\out{\hypertarget{method-Chat-chat}{}}}
 \subsection{Method \code{chat()}}{
-create a new chat session
+continue the chat conversation
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chat$chat(message)}\if{html}{\out{</div>}}
 }
@@ -75,6 +125,7 @@ create a new chat session
 \if{html}{\out{<a id="method-Chat-usage"></a>}}
 \if{latex}{\out{\hypertarget{method-Chat-usage}{}}}
 \subsection{Method \code{usage()}}{
+view the current token usage for this chat session
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chat$usage()}\if{html}{\out{</div>}}
 }
