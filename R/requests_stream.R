@@ -42,6 +42,3 @@ completions_stream <- function(prompt
   x = gpt_request_stream("https://api.openai.com/v1/chat/completions", callback, payload, token)
   x
 }
-
-# x = completions_stream("write an R function that calculates the standard deviation from the mean for a set of numbers")
-

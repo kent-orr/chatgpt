@@ -15,7 +15,7 @@ Chat <- R6::R6Class("Chat"
     , latest_response = NULL
     , tokens = 0
     #' @description reset the chat, this removes all "memory" of the previous conversation.
-    , reset = function() {self$messages = NULL; self$usr = "system"}
+    , reset = function() {self$messages = NULL; self$usr = "system"},
 
 
 # Initialize --------------------------------------------------------------
@@ -24,7 +24,7 @@ Chat <- R6::R6Class("Chat"
     #' @param message the message you'd like to send
     #' @param payload additional post body options, usually the model
     #' @param token your openai auth token
-    , initialize = function(message
+    initialize = function(message
                             , payload = list(model = "gpt-3.5-turbo")
                             , token = config::get()$openai) {
       self$model = payload$model
@@ -37,7 +37,7 @@ Chat <- R6::R6Class("Chat"
       self$messages = c(list(list(role = self$usr, content = message)), list(as.list(x$choices$message)))
       self$usr = "user"
       self$tokens = self$tokens + x$usage$total_tokens
-    }
+    },
 
 
 # Add Function ------------------------------------------------------------
@@ -46,24 +46,74 @@ Chat <- R6::R6Class("Chat"
     #' @param name function name
     #' @param description what the function does
     #' @param parameters list of parameters the function returns
-    , add_function = function(name, description = NULL, parameters) {
+    add_function = function(name, description = NULL, parameters) {
       f = list(
         name = name
         , description = description
-        , parameters = list(type = "object", properties = parameters)
-      )
+        , parameters = list(type = "object"
+                            , properties = parameters)
+               )
       # browser()
       if (length(self$functions) == 0)
         self$functions = list()
       self$functions = append(self$functions, list(f))
-    }
+    },
 
+
+# Call a Function ---------------------------------------------------------
+
+    #' call_function method for calling predefined functions
+    #'
+    #' This method sends a request to call a predefined function in the model.
+    #' It constructs a payload that includes the function call and its arguments,
+    #' then sends this as part of the chat messages to the API.
+    #'
+    #' @param name The name of the function to call.
+    #' @param arguments A list of arguments for the function call (default is an empty list).
+    #' @return The updated Chat object, reflecting the latest state after the function call.
+    #' @export
+    call_function = function(name, arguments = list()) {
+      if (!is.character(name) || nchar(name) == 0) {
+        stop("A valid function name must be provided as a non-empty string.", call. = FALSE)
+      }
+
+      # Construct the function call payload
+      self$function_call <- list(name = name)
+      if (length(arguments) > 0) {
+        self$function_call$arguments <- arguments
+      }
+
+      # Add the function call to the chat payload
+      msg <- list(list(role = "system", function_call = self$function_call))
+
+      # Create the payload for the API request
+      payload <- list(
+        model = self$model,
+        messages = c(self$messages, msg)
+      )
+
+      if (!is.null(self$functions)) {
+        payload$functions <- self$functions
+      }
+
+      # Perform the API call
+      x <- chats(payload$messages, payload = payload, token = self$token)
+      print(x)
+
+      # Update the latest response and messages history
+      self$latest_response <- x$choices$message$content
+      self$messages <- c(self$messages, list(as.list(x$choices$message)))
+      self$tokens <- self$tokens + x$usage$total_tokens
+
+      # Return the updated Chat object
+      return(self)
+    },
 
 # Chat --------------------------------------------------------------------
 
     #' @description continue the chat conversation
     #' @param message the message you'd like to send
-    , chat = function(message) {
+    chat = function(message) {
 
       msg = c(self$messages, list(list(role = self$usr, content = message)))
       payload = list(model = self$model)
@@ -95,17 +145,16 @@ Chat <- R6::R6Class("Chat"
 
 
       self$tokens = self$tokens + x$usage$total_tokens
-    }
+
+      return(self)
+    },
 
 
 # Usage -------------------------------------------------------------------
 
     #' @description view the current token usage for this chat session
-    , usage = function() {
-      recent = paste("🧑", self$latest_response$usage$prompt_tokens
-                     , "🖥️"  , self$latest_response$usage$prompt_tokens
-                     , "Total:", self$latest_response$usage$total_tokens, collapse = " | ")
-      glue::glue("Most Recent: {recent}\nTotal: {self$tokens}\n") |> cat()
+    usage = function() {
+      glue::glue("Total: {self$tokens}\n") |> cat()
     }
     )
 )

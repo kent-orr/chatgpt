@@ -11,15 +11,15 @@ prompt_shiny <- function() {
     , useKeys()
     , keysInput("keys", "ctrl+enter", TRUE)
     , column(12,
-           h3("Input")
-           ,tags$div(class="input", textAreaInput("prompt", "", width = "100%"))
-           , actionButton("submit", "Ask", icon = icon("paper-plane"))
-           ) # end top column
-    , column(12,
              h3("Output")
              , tags$div(id="output")
-             , verbatimTextOutput("console")
+             # , verbatimTextOutput("console")
              ) # end bottom column
+    , column(12,
+             h3("Input")
+             ,tags$div(class="input", textAreaInput("prompt", "", width = "100%"))
+             , actionButton("submit", "Ask", icon = icon("paper-plane"))
+    ) # end top column
   )
 
   server <- function(input, output, session) {
@@ -68,7 +68,7 @@ prompt_shiny <- function() {
       insertUI("#output"
                , ui = tags$div(
                  class = "response"
-                 , tags$p(x$latest_response)
+                 , HTML(markdown::mark(x$latest_response, template = FALSE))
                )
                , immediate = TRUE)
 
@@ -84,6 +84,3 @@ prompt_shiny <- function() {
 
   shinyApp(ui, server) |> runApp()
 }
-
-
-

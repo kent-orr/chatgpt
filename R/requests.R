@@ -66,9 +66,9 @@ print.chat.completion <- function(x, ...) {
   else
     x$choices$message$content
 
-  cat(stringr::str_squish(content))
+  cat(content)
 }
 
 print.text_completion <- function(x, ...) {
-  cat(stringr::str_squish(x$choices$text))
+  cat(x$choices$text)
 }
