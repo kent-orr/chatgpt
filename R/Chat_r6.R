@@ -42,10 +42,35 @@ Chat <- R6::R6Class("Chat"
 
 # Add Function ------------------------------------------------------------
 
-    #' @description add a function to the payload functions
-    #' @param name function name
-    #' @param description what the function does
-    #' @param parameters list of parameters the function returns
+    #' Add a custom function for the ChatGPT model to call
+    #'
+    #' This method registers a new custom function that the ChatGPT model can call.
+    #' The function is defined by its name, a description of its behavior, and the
+    #' structure of the parameters that will be included in the JSON response from ChatGPT.
+    #'
+    #' @param name The name of the custom function to be added.
+    #' @param description A description of what the function does and what it is used for.
+    #' @param parameters A list describing the expected parameters in the JSON
+    #' response from ChatGPT when this function is called. Each parameter should include
+    #' its name, type, and a description.
+    #'
+    #' @return The method invisibly returns the updated Chat object with the new function
+    #' added to its list of available functions.
+    #'
+    #' @examples
+    #' chat <- Chat$new("How can I assist you?")
+    #' chat$add_function(
+    #'   name = "analyze_sentiment",
+    #'   description = "Analyzes the sentiment of the provided text and returns a score between 0 and 1.",
+    #'   parameters = list(
+    #'     score = list(
+    #'       type = "number",
+    #'       description = "Sentiment score where 0 indicates negative and 1 indicates positive sentiment."
+    #'     )
+    #'   )
+    #' )
+    #'
+    #' @export
     add_function = function(name, description = NULL, parameters) {
       f = list(
         name = name
@@ -77,13 +102,8 @@ Chat <- R6::R6Class("Chat"
         stop("A valid function name must be provided as a non-empty string.", call. = FALSE)
       }
 
-      # browser()
-
       # Construct the function call payload
       self$function_call <- list(name = name)
-      # if (length(arguments) > 0) {
-      #   self$function_call$arguments <- arguments
-      # }
 
       # Add the function call to the chat payload
       msg <- list(list(role = "user", content = msg))
