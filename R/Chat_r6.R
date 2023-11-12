@@ -26,7 +26,8 @@ Chat <- R6::R6Class("Chat"
     #' @param token your openai auth token
     initialize = function(message
                             , payload = list(model = "gpt-3.5-turbo")
-                            , token = config::get()$openai) {
+                            , token = config::get()$openai
+                            , stream = FALSE) {
       self$model = payload$model
       self$functions = payload$functions
       self$function_call = payload$function_call

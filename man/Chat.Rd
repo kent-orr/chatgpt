@@ -2,12 +2,29 @@
 % Please edit documentation in R/Chat_r6.R
 \name{Chat}
 \alias{Chat}
-\title{Createa a running chat dialogue}
+\title{Create a a running chat dialogue}
 \description{
 This R6 class stores chat messages to be used in the future  calls, so gpt can retain 'memory' of the conversation. Additionally there are some helpers to display token usage and to reset the chat.
 }
 \examples{
 chat = Chat$new('List ingredients in spaghetti')
+
+
+## ------------------------------------------------
+## Method `Chat$add_function`
+## ------------------------------------------------
+
+chat <- Chat$new("How can I assist you?")
+chat$add_function(
+  name = "analyze_sentiment",
+  description = "Analyzes the sentiment of the provided text and returns a score between 0 and 1.",
+  parameters = list(
+    score = list(
+      type = "number",
+      description = "Sentiment score where 0 indicates negative and 1 indicates positive sentiment."
+    )
+  )
+)
 
 }
 \section{Methods}{
@@ -41,7 +58,8 @@ create a new chat session
 \if{html}{\out{<div class="r">}}\preformatted{Chat$new(
   message,
   payload = list(model = "gpt-3.5-turbo"),
-  token = config::get()$openai
+  token = config::get()$openai,
+  stream = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -52,7 +70,12 @@ create a new chat session
 
 \item{\code{payload}}{additional post body options, usually the model}
 
-\item{\code{token}}{your openai auth token}
+\item{\code{token}}{your openai auth token
+Add a custom function for the ChatGPT model to call
+
+This method registers a new custom function that the ChatGPT model can call.
+The function is defined by its name, a description of its behavior, and the
+structure of the parameters that will be included in the JSON response from ChatGPT.}
 }
 \if{html}{\out{</div>}}
 }
@@ -61,7 +84,6 @@ create a new chat session
 \if{html}{\out{<a id="method-Chat-add_function"></a>}}
 \if{latex}{\out{\hypertarget{method-Chat-add_function}{}}}
 \subsection{Method \code{add_function()}}{
-add a function to the payload functions
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Chat$add_function(name, description = NULL, parameters)}\if{html}{\out{</div>}}
 }
@@ -69,26 +91,46 @@ add a function to the payload functions
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{name}}{function name}
+\item{\code{name}}{The name of the custom function to be added.}
 
-\item{\code{description}}{what the function does}
+\item{\code{description}}{A description of what the function does and what it is used for.}
 
-\item{\code{parameters}}{list of parameters the function returns
-call_function method for calling predefined functions
-
-This method sends a request to call a predefined function in the model.
-It constructs a payload that includes the function call and its arguments,
-then sends this as part of the chat messages to the API.}
+\item{\code{parameters}}{A list describing the expected parameters in the JSON
+response from ChatGPT when this function is called. Each parameter should include
+its name, type, and a description.}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+The method invisibly returns the updated Chat object with the new function
+added to its list of available functions.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{chat <- Chat$new("How can I assist you?")
+chat$add_function(
+  name = "analyze_sentiment",
+  description = "Analyzes the sentiment of the provided text and returns a score between 0 and 1.",
+  parameters = list(
+    score = list(
+      type = "number",
+      description = "Sentiment score where 0 indicates negative and 1 indicates positive sentiment."
+    )
+  )
+)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Chat-call_function"></a>}}
 \if{latex}{\out{\hypertarget{method-Chat-call_function}{}}}
 \subsection{Method \code{call_function()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Chat$call_function(name, arguments = list())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Chat$call_function(name, msg)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
