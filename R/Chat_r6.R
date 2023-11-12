@@ -1,4 +1,4 @@
-#' Createa a running chat dialogue
+#' Create a a running chat dialogue
 #' @description This R6 class stores chat messages to be used in the future  calls, so gpt can retain 'memory' of the conversation. Additionally there are some helpers to display token usage and to reset the chat.
 #' @export
 #' @examples chat = Chat$new('List ingredients in spaghetti')
@@ -26,7 +26,8 @@ Chat <- R6::R6Class("Chat"
     #' @param token your openai auth token
     initialize = function(message
                             , payload = list(model = "gpt-3.5-turbo")
-                            , token = config::get()$openai) {
+                            , token = config::get()$openai
+                            , stream = FALSE) {
       self$model = payload$model
       self$functions = payload$functions
       self$function_call = payload$function_call
@@ -42,10 +43,35 @@ Chat <- R6::R6Class("Chat"
 
 # Add Function ------------------------------------------------------------
 
-    #' @description add a function to the payload functions
-    #' @param name function name
-    #' @param description what the function does
-    #' @param parameters list of parameters the function returns
+    #' Add a custom function for the ChatGPT model to call
+    #'
+    #' This method registers a new custom function that the ChatGPT model can call.
+    #' The function is defined by its name, a description of its behavior, and the
+    #' structure of the parameters that will be included in the JSON response from ChatGPT.
+    #'
+    #' @param name The name of the custom function to be added.
+    #' @param description A description of what the function does and what it is used for.
+    #' @param parameters A list describing the expected parameters in the JSON
+    #' response from ChatGPT when this function is called. Each parameter should include
+    #' its name, type, and a description.
+    #'
+    #' @return The method invisibly returns the updated Chat object with the new function
+    #' added to its list of available functions.
+    #'
+    #' @examples
+    #' chat <- Chat$new("How can I assist you?")
+    #' chat$add_function(
+    #'   name = "analyze_sentiment",
+    #'   description = "Analyzes the sentiment of the provided text and returns a score between 0 and 1.",
+    #'   parameters = list(
+    #'     score = list(
+    #'       type = "number",
+    #'       description = "Sentiment score where 0 indicates negative and 1 indicates positive sentiment."
+    #'     )
+    #'   )
+    #' )
+    #'
+    #' @export
     add_function = function(name, description = NULL, parameters) {
       f = list(
         name = name
@@ -72,19 +98,16 @@ Chat <- R6::R6Class("Chat"
     #' @param arguments A list of arguments for the function call (default is an empty list).
     #' @return The updated Chat object, reflecting the latest state after the function call.
     #' @export
-    call_function = function(name, arguments = list()) {
+    call_function = function(name, msg) {
       if (!is.character(name) || nchar(name) == 0) {
         stop("A valid function name must be provided as a non-empty string.", call. = FALSE)
       }
 
       # Construct the function call payload
       self$function_call <- list(name = name)
-      if (length(arguments) > 0) {
-        self$function_call$arguments <- arguments
-      }
 
       # Add the function call to the chat payload
-      msg <- list(list(role = "system", function_call = self$function_call))
+      msg <- list(list(role = "user", content = msg))
 
       # Create the payload for the API request
       payload <- list(
@@ -99,6 +122,9 @@ Chat <- R6::R6Class("Chat"
       # Perform the API call
       x <- chats(payload$messages, payload = payload, token = self$token)
       print(x)
+
+      # return functions payload to default for future chats
+      self$function_call <- NULL
 
       # Update the latest response and messages history
       self$latest_response <- x$choices$message$content
